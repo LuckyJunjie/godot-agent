@@ -1,15 +1,16 @@
 [project]
-name = "nanobot-ai"
-version = "0.1.5.post3"
-description = "A lightweight personal AI assistant framework"
+name = "godot-agent"
+version = "0.1.0"
+description = "AI-powered agent for Godot 4.x game development, forked from nanobot"
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [
     {name = "Xubin Ren"},
-    {name = "the nanobot contributors"}
+    {name = "the nanobot contributors"},
+    {name = "the godot-agent contributors"}
 ]
-keywords = ["ai", "agent", "chatbot"]
+keywords = ["ai", "agent", "chatbot", "godot", "gamedev"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -62,6 +63,7 @@ dependencies = [
     "python-pptx>=1.0.0,<2.0.0",
     "filelock>=3.25.2",
     "boto3>=1.43.0",
+    "pyyaml>=6.0,<7.0.0",
 ]
 
 [project.optional-dependencies]
@@ -108,6 +110,7 @@ dev = [
 
 [project.scripts]
 nanobot = "nanobot.cli.commands:app"
+godot-agent = "godot_agent.cli:app"
 
 [build-system]
 requires = ["hatchling"]
@@ -122,13 +125,16 @@ include = [
     "nanobot/templates/**/*.md",
     "nanobot/skills/**/*.md",
     "nanobot/skills/**/*.sh",
+    "godot_agent/**/*.py",
+    "godot_agent/**/*.yaml",
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["nanobot"]
+packages = ["nanobot", "godot_agent"]
 
 [tool.hatch.build.targets.wheel.sources]
 "nanobot" = "nanobot"
+"godot_agent" = "godot_agent"
 
 [tool.hatch.build.targets.wheel.force-include]
 "bridge" = "nanobot/bridge"
@@ -136,6 +142,7 @@ packages = ["nanobot"]
 [tool.hatch.build.targets.sdist]
 include = [
     "nanobot/",
+    "godot_agent/",
     "bridge/",
     "README.md",
     "LICENSE",
@@ -156,7 +163,7 @@ asyncio_mode = "auto"
 testpaths = ["tests"]
 
 [tool.coverage.run]
-source = ["nanobot"]
+source = ["nanobot", "godot_agent"]
 omit = ["tests/*", "**/tests/*"]
 
 [tool.coverage.report]
