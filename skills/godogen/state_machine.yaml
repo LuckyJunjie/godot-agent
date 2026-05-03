@@ -1,0 +1,123 @@
+name: generate_state_machine
+description: >
+  Generate a GDScript state machine class with enter/exit/update handlers
+  and automatic state transition validation.
+inputSchema:
+  type: object
+  required: [class_name, states]
+  properties:
+    class_name:
+      type: string
+      description: "PascalCase class name for the state machine"
+    states:
+      type: array
+      description: "List of state definitions"
+      items:
+        type: object
+        required: [name]
+        properties:
+          name:
+            type: string
+            description: "State name in PascalCase"
+          enter:
+            type: string
+            description: "GDScript code for enter handler"
+          update:
+            type: string
+            description: "GDScript code for update/process handler"
+          exit:
+            type: string
+            description: "GDScript code for exit handler"
+    transitions:
+      type: array
+      description: "Allowed state transitions"
+      items:
+        type: object
+        required: [from, to]
+        properties:
+          from:
+            type: string
+          to:
+            type: string
+          condition:
+            type: string
+            description: "GDScript condition expression"
+template: |
+  class_name {{ class_name }} extends Node
+
+  enum State {
+  {%- for s in states %}
+  	{{ s.name | upper }}{% if not loop.last %},{% endif %}
+  {%- endfor %}
+  }
+
+  var current_state: State = State.{{ states[0].name | upper }}
+  var previous_state: State = State.{{ states[0].name | upper }}
+
+  {%- for s in states %}
+  {%- if s.enter %}
+  signal entered_{{ s.name | lower }}
+  {%- endif %}
+  {%- if s.exit %}
+  signal exited_{{ s.name | lower }}
+  {%- endif %}
+  {%- endfor %}
+
+  func _ready() -> void:
+  	_enter_state(current_state)
+
+  func _process(delta: float) -> void:
+  	_update_state(delta)
+
+  func transition_to(new_state: State) -> void:
+  	if not _can_transition(current_state, new_state):
+  		push_warning("Invalid transition: %s -> %s" % [State.keys()[current_state], State.keys()[new_state]])
+  		return
+  	_exit_state(current_state)
+  	previous_state = current_state
+  	current_state = new_state
+  	_enter_state(current_state)
+
+  func _can_transition(from_state: State, to_state: State) -> bool:
+  {%- if transitions %}
+  	match from_state:
+  {%- for t in transitions %}
+  		State.{{ t.from | upper }}:
+  {%- if loop.first %}
+  			return to_state == State.{{ t.to | upper }}
+  {%- else %}
+  				 or to_state == State.{{ t.to | upper }}
+  {%- endif %}
+  {%- endfor %}
+  		_:
+  			return false
+  {%- else %}
+  	return true
+  {%- endif %}
+
+  func _enter_state(state: State) -> void:
+  	match state:
+  {%- for s in states %}
+  {%- if s.enter %}
+  		State.{{ s.name | upper }}:
+  			{{ s.enter | indent(4) }}
+  {%- endif %}
+  {%- endfor %}
+
+  func _update_state(delta: float) -> void:
+  	match current_state:
+  {%- for s in states %}
+  {%- if s.update %}
+  		State.{{ s.name | upper }}:
+  			{{ s.update | indent(4) }}
+  {%- endif %}
+  {%- endfor %}
+
+  func _exit_state(state: State) -> void:
+  	match state:
+  {%- for s in states %}
+  {%- if s.exit %}
+  		State.{{ s.name | upper }}:
+  			{{ s.exit | indent(4) }}
+  {%- endif %}
+  {%- endfor %}

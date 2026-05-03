@@ -127,6 +127,8 @@ include = [
     "nanobot/skills/**/*.sh",
     "godot_agent/**/*.py",
     "godot_agent/**/*.yaml",
+    "skills/**/*.yaml",
+    "skills/**/*.md",
 ]
 
 [tool.hatch.build.targets.wheel]

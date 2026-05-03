@@ -1,0 +1,54 @@
+name: generate_animation_tree
+description: >
+  Generate an AnimationTree setup script with state machine blending
+  for character animations.
+inputSchema:
+  type: object
+  required: [class_name, animations]
+  properties:
+    class_name:
+      type: string
+    animations:
+      type: array
+      items:
+        type: object
+        properties:
+          name:
+            type: string
+          blend_time:
+            type: number
+            default: 0.1
+          loop:
+            type: boolean
+            default: true
+          speed:
+            type: number
+            default: 1.0
+template: |
+  class_name {{ class_name }} extends AnimationTree
+
+  @onready var state_machine: AnimationNodeStateMachinePlayback = get("parameters/playback")
+
+  enum AnimState {
+  {%- for a in animations %}
+  	{{ a.name | upper }}{% if not loop.last %},{% endif %}
+  {%- endfor %}
+  }
+
+  var current_anim: AnimState = AnimState.{{ animations[0].name | upper }}
+
+  func _ready() -> void:
+  	active = true
+
+  func play_anim(anim: AnimState) -> void:
+  	if anim == current_anim:
+  		return
+  	current_anim = anim
+  	match anim:
+  {%- for a in animations %}
+  		AnimState.{{ a.name | upper }}:
+  			state_machine.travel("{{ a.name }}")
+  {%- endfor %}
+
+  func set_speed(anim: AnimState, speed: float) -> void:
+  	set("parameters/{{ a.name }}/speed_scale", speed)

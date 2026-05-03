@@ -1,0 +1,69 @@
+name: generate_ui_screen
+description: >
+  Generate a Godot UI screen (Control-based) with layout nodes,
+  signals, and theme integration.
+inputSchema:
+  type: object
+  required: [name]
+  properties:
+    name:
+      type: string
+      description: "PascalCase screen name"
+    elements:
+      type: array
+      items:
+        type: object
+        properties:
+          type:
+            type: string
+            default: "Button"
+          name:
+            type: string
+          text:
+            type: string
+          anchor:
+            type: string
+            default: "center"
+    theme:
+      type: string
+      description: "Path to theme resource"
+template: |
+  class_name {{ name }}Screen extends Control
+
+  {%- for el in elements %}
+  @onready var {{ el.name }}: {{ el.type }} = ${{ el.name }}
+  {%- endfor %}
+
+  {%- if theme %}
+  @export var screen_theme: Theme = preload("{{ theme }}")
+  {%- endif %}
+
+  signal closed
+
+  func _ready() -> void:
+  	{%- if theme %}
+  	theme = screen_theme
+  	{%- endif %}
+  	_connect_signals()
+
+  func _connect_signals() -> void:
+  	{%- for el in elements %}
+  	{%- if el.type == "Button" %}
+  	{{ el.name }}.pressed.connect(_on_{{ el.name }}_pressed)
+  	{%- endif %}
+  	{%- endfor %}
+
+  {%- for el in elements %}
+  {%- if el.type == "Button" %}
+  func _on_{{ el.name }}_pressed() -> void:
+  	# TODO: implement {{ el.name }} action
+  	pass
+  {%- endif %}
+  {%- endfor %}
+
+  func show_screen() -> void:
+  	visible = true
+
+  func hide_screen() -> void:
+  	visible = false
+  	closed.emit()
