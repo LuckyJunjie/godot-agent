@@ -9,6 +9,8 @@ from godot_agent.gdd import GDDEngine, GDDStory
 from godot_agent.assets import AssetPipeline, ImageMeta, AudioMeta, ModelMeta
 from godot_agent.harness import HarnessRunner, TestResult, SceneResult
 from godot_agent.godogen import GodogenIntegrator, ToolSpec
+from godot_agent.config import GodotConfig, AssetsConfig, HarnessConfig, GodotAgentConfig, load_config, save_config
+from godot_agent.bridge import register_godot_tools
 
 __version__ = "0.1.0"
 __author__ = "Newton Team"
@@ -28,4 +30,11 @@ __all__ = [
     "SceneResult",
     "GodogenIntegrator",
     "ToolSpec",
+    "GodotConfig",
+    "AssetsConfig",
+    "HarnessConfig",
+    "GodotAgentConfig",
+    "load_config",
+    "save_config",
+    "register_godot_tools",
 ]
