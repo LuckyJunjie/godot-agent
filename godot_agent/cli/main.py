@@ -10,6 +10,7 @@ from rich.table import Table
 
 from godot_agent import __version__
 from godot_agent.assets import AssetPipeline, ImageMeta, AudioMeta, ModelMeta
+from godot_agent.config import load_config, save_config, GodotAgentConfig, GodotConfig
 from godot_agent.gdd import GDDEngine
 from godot_agent.harness import HarnessRunner
 from godot_agent.scene import SceneDocument
@@ -22,6 +23,11 @@ app = typer.Typer(
 console = Console()
 
 
+def _load_cfg(config: Optional[str] = None):
+    """Load configuration with optional override."""
+    return load_config(config)
+
+
 @app.command()
 def version():
     """Show version."""
@@ -31,6 +37,7 @@ def version():
 @app.command()
 def init(
     project: str = typer.Option(".", "--project", "-p", help="Godot project path"),
+    config: Optional[str] = typer.Option(None, "--config", "-c", help="Config file path"),
 ):
     """Initialize a Godot project with agent scaffolding."""
     project_path = Path(project).resolve()
@@ -52,7 +59,21 @@ def init(
     (test_dir / "__init__.py").touch()
     console.print(f"[green]Initialized tests at[/green] {test_dir}")
 
+    # Create default config
+    cfg = GodotAgentConfig(godot=GodotConfig(project_path=str(project_path)))
+    saved = save_config(cfg, config)
+    console.print(f"[green]Created config at[/green] {saved}")
+
     console.print(f"\n[bold]Project initialized at {project_path}[/bold]")
+
+
+@app.command()
+def config_show(
+    config: Optional[str] = typer.Option(None, "--config", "-c"),
+):
+    """Show current configuration."""
+    cfg = _load_cfg(config)
+    console.print_json(data=cfg.model_dump(by_alias=True))
 
 
 @app.command()
@@ -90,9 +111,10 @@ def harness(
     test_script: Optional[str] = typer.Argument(None, help="Test script path"),
     project: str = typer.Option(".", "--project", "-p"),
     all_tests: bool = typer.Option(False, "--all", help="Run all tests"),
+    godot_path: Optional[str] = typer.Option(None, "--godot"),
 ):
     """Run Godot test harness."""
-    runner = HarnessRunner(project)
+    runner = HarnessRunner(project, godot_path=godot_path or "godot")
 
     async def run():
         if test_script:

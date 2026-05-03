@@ -127,6 +127,8 @@ include = [
     "nanobot/skills/**/*.sh",
     "godot_agent/**/*.py",
     "godot_agent/**/*.yaml",
+    "godot_agent/templates/**/*.gd",
+    "godot_agent/templates/**/*.tscn",
     "skills/**/*.yaml",
     "skills/**/*.md",
 ]

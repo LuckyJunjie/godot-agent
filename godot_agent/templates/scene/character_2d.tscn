@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/{{ script_name }}.gd" id="1_{{ script_name }}"]
+[ext_resource type="Texture2D" uid="uid://{{ texture_uid }}" path="res://assets/sprites/{{ sprite_name }}.png" id="2_{{ sprite_name }}"]
+
+[node name="{{ class_name }}" type="CharacterBody2D"]
+script = ExtResource("1_{{ script_name }}")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_{{ sprite_name }}")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
