@@ -13,6 +13,7 @@ from godot_agent.assets import AssetPipeline, ImageMeta, AudioMeta, ModelMeta
 from godot_agent.config import load_config, save_config, GodotAgentConfig, GodotConfig
 from godot_agent.gdd import GDDEngine
 from godot_agent.harness import HarnessRunner
+from godot_agent.inspector import ProjectInspector
 from godot_agent.scene import SceneDocument
 
 app = typer.Typer(
@@ -74,6 +75,52 @@ def config_show(
     """Show current configuration."""
     cfg = _load_cfg(config)
     console.print_json(data=cfg.model_dump(by_alias=True))
+
+
+@app.command()
+def inspect(
+    project: str = typer.Option(".", "--project", "-p", help="Godot project path"),
+):
+    """Inspect a Godot project and print a report."""
+    inspector = ProjectInspector(project)
+    report = inspector.inspect()
+    
+    table = Table(title=f"Project Report: {report.project_name or 'Unnamed'}")
+    table.add_column("Metric", style="cyan")
+    table.add_column("Value", style="green")
+    
+    table.add_row("Path", report.project_path)
+    table.add_row("Godot Version", report.godot_version or "unknown")
+    table.add_row("Scenes", str(report.stats.get("scene_count", 0)))
+    table.add_row("Scripts", str(report.stats.get("script_count", 0)))
+    table.add_row("Total Lines", str(report.stats.get("total_lines", 0)))
+    table.add_row("Autoloads", str(report.stats.get("autoload_count", 0)))
+    table.add_row("Input Actions", str(report.stats.get("input_action_count", 0)))
+    table.add_row("Total Nodes", str(report.stats.get("nodes_total", 0)))
+    
+    console.print(table)
+    
+    if report.autoloads:
+        console.print("\n[bold]Autoloads:[/bold]")
+        for a in report.autoloads:
+            singleton = " (singleton)" if a["singleton"] else ""
+            console.print(f"  {a['name']} -> {a['path']}{singleton}")
+    
+    if report.scenes:
+        console.print("\n[bold]Scenes:[/bold]")
+        for s in report.scenes:
+            console.print(f"  {s.path} — {s.node_count} nodes ({s.root_type})")
+    
+    if report.scripts:
+        console.print("\n[bold]Scripts:[/bold]")
+        for s in report.scripts:
+            cls = f" [class: {s.class_name}]" if s.class_name else ""
+            console.print(f"  {s.path} — {s.line_count} lines{cls}")
+    
+    if report.warnings:
+        console.print("\n[bold red]Warnings:[/bold red]")
+        for w in report.warnings:
+            console.print(f"  ! {w}")
 
 
 @app.command()
