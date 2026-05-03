@@ -1,0 +1,21 @@
+[gd_scene load_steps=3 format=3 uid="uid://l1x2x3x4x5x6x"]
+
+[ext_resource type="PackedScene" uid="uid://c2x3x3x3x3x3x" path="res://scenes/player.tscn" id="1_player"]
+
+[sub_resource type="TileSet" id="TileSet_ground"]
+
+[node name="Level01" type="Node2D"]
+
+[node name="TileMap" type="TileMap" parent="."]
+tile_set = SubResource("TileSet_ground")
+format = 2
+layer_0/tile_data = PackedInt32Array()
+
+[node name="Player" parent="." instance=ExtResource("1_player")]
+position = Vector2(100, 200)
+
+[node name="Collectibles" type="Node2D" parent="."]
+
+[node name="Enemies" type="Node2D" parent="."]
+
+[node name="ParallaxBackground" type="ParallaxBackground" parent="."]
