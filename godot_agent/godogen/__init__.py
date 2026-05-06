@@ -228,3 +228,87 @@ class GodogenIntegrator:
             ])
         
         return '\n'.join(lines)
+
+# Additional generators for game types
+
+def generate_snake_game(self, name: str, properties: dict) -> str:
+    """Generate a complete snake game script."""
+    
+    speed_var = properties.get("speed", "float")
+    direction_var = properties.get("direction", "Vector2")
+    can_wrap = properties.get("can_wrap", "bool")
+    
+    lines = [
+        "#encoding: utf-8",
+        f"extends Node2D",
+        f"class_name {name.capitalize()}",
+        "",
+        f"var speed: {speed_var} = 200.0",
+        f"var direction: {direction_var} = Vector2.RIGHT",
+        f"var body_parts: Array = []",
+        f"var score: int = 0",
+        f"var is_game_over: bool = false",
+        f"var can_wrap: {can_wrap} = true",
+        "var wrap_charges: int = 3",
+        f"var food_position: Vector2",
+        "",
+        "func _ready():",
+        "    var start_pos = get_viewport_rect().size / 2",
+        "    for i in range(5):",
+        "        add_body_part(start_pos - Vector2(i * 20, 0))",
+        "    spawn_food()",
+        "",
+        "func _process(delta):",
+        "    if is_game_over:",
+        "        return",
+        "    move_snake(delta)",
+        "    check_food_collision()",
+        "    check_wall_collision()",
+        "",
+        "func move_snake(delta):",
+        "    var head = body_parts[0]",
+        "    var new_pos = head.position + direction * speed * delta",
+        "    ",
+        "    if can_wrap and wrap_charges > 0:",
+        "        wrap_position(new_pos)",
+        "    ",
+        "    for i in range(body_parts.size() - 1, 0, -1):",
+        "        body_parts[i].position = body_parts[i-1].position",
+        "    body_parts[0].position = new_pos",
+        "",
+        "func add_body_part(pos: Vector2):",
+        "    var part = ColorRect.new()",
+        "    part.size = Vector2(20, 20)",
+        "    part.position = pos",
+        "    part.color = Color(0, 1, 0.5)",
+        "    add_child(part)",
+        "    body_parts.append(part)",
+        "",
+        "func spawn_food():",
+        "    pass",
+        "",
+        "func check_food_collision():",
+        "    pass",
+        "",
+        "func wrap_position(pos: Vector2):",
+        "    pass",
+        "",
+        "func check_wall_collision():",
+        "    pass",
+        "",
+        "func game_over():",
+        "    is_game_over = true",
+        "    print('Game Over! Score: ', score)",
+        "",
+        "func _input(event):",
+        "    if event.is_action_pressed('ui_up'):",
+        "        direction = Vector2.UP",
+        "    elif event.is_action_pressed('ui_down'):",
+        "        direction = Vector2.DOWN",
+        "    elif event.is_action_pressed('ui_left'):",
+        "        direction = Vector2.LEFT",
+        "    elif event.is_action_pressed('ui_right'):",
+        "        direction = Vector2.RIGHT",
+    ]
+    
+    return '\n'.join(lines)
