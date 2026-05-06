@@ -151,3 +151,26 @@ class AgentWorkflow:
 - [ ] 测试: 贪食蛇完整自动化
 
 更新: 2026-05-06
+---
+
+## 更新 2026-05-06 (Step 1-3)
+
+### ✅ 已完成
+1. **需求理解 (G1)** - RequirementLLM class
+2. **GDD 生成 (G2)** - llm.py 
+3. **代码生成 (G3)** - 已实现
+4. **验证循环 (G4)** - test_fix.py
+
+### 新增模块
+```
+godot_agent/workflow/
+├── __init__.py      # 基础工作流
+├── llm.py         # LLM集成
+└── test_fix.py    # 自动测试与修复
+```
+
+### 工作流状态
+- [x] P0: 核心闭环 ✅
+- [x] P1: 多轮迭代 (FixLoop)
+- [ ] P2: 自动部署 (待)
+
