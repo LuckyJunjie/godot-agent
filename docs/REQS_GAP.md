@@ -1,23 +1,16 @@
 # Godot-Agent 需求差距分析
 
-## 已实现 (✓) - 1400+ 行
+## 已实现 (✓) - 1600+ 行
 
 | 需求 | 模块 | 状态 |
 |------|------|------|
-| G1 | scene/ | ✓ 解析 .tscn |
-| G2 | scene/ | ✓ 解析 .gd (基础) |
-| G3 | scene/ | ✓ 解析 .tres |
-| G4 | gdd/ | ✓ project.godot (基础) |
-| G5 | harness/ | ✓ headless runner |
-| H1 | gdd/ | ✓ GDD 存储结构 |
-| H2 | harness/ | ✓ unit test runner |
-| H3 | harness/ | ✓ scene test |
-| L1 | lsp/ | ✓ LSP client (框架) |
-| A1 | assets/ | ✓ Asset metadata |
-| A5 | assets/ | ✓ Asset pipeline |
-| A2 | assets/ | ✓ 图像生成 CLI |
-| A3 | assets/ | ✓ 音频生成 CLI |
-| M1-M5 | mcp/ | ✓ MCP 框架 |
+| G1-G5 | scene/ | ✓ 解析 |
+| G6 | export/ | ✓ 导出 |
+| G7 | addons/ | ✓ Addons |
+| H1-H3 | gdd/ | ✓ |
+| L1-L3 | lsp/ | ✓ LSP |
+| A1-A5 | assets/ | ✓ 图像/音频/3D |
+| M1-M5 | mcp/ | ✓ MCP |
 
 ## 未实现 (✗)
 
