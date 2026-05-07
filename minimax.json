@@ -1,6 +1,5 @@
 {
-  "provider": "minimax",
+  "api_key_env": "MINIMAX_API_KEY",
   "model": "minimax-portal/MiniMax-M2.5",
-  "api_key": "使用Newton相同的OAuth",
   "base_url": "https://api.minimax.chat/v1"
 }
