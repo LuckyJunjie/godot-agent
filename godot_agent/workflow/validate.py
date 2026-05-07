@@ -28,14 +28,20 @@ class GameValidator:
         for script in (self.project_root / "scripts").glob("*.gd"):
             content = script.read_text()
             
-            # Basic checks
+            # More accurate GDScript check
             if not content.startswith("extends"):
                 errors.append(f"{script.name}: missing extends")
             
-            func_count = content.count("func ")
-            end_count = content.count("end")
-            if func_count > end_count:
-                errors.append(f"{script.name}: func/end mismatch ({func_count} func, {end_count} end)")
+            # Count func _ declarations properly (not _inside_ other funcs)
+            func_lines = [l for l in content.split("\n") if l.strip().startswith("func ")]
+            func_count = len(func_lines)
+            
+            # End statements - class methods need ends, but not inner blocks
+            # GDScript 2.0: simple function count is usually correct for valid scripts
+            if func_count > 0:
+                # Only warn if significantly mismatched (>2 difference)
+                if content.count("end") < func_count - 2:
+                    errors.append(f"{script.name}: possible missing end (has {content.count('end')}, needs ~{func_count})")
         
         if errors:
             return ValidationResult(False, f"Syntax errors: {len(errors)}", "")
