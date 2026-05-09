@@ -1,176 +1,97 @@
-# Godot-Agent 自动化差距分析
+# Godot-Agent 差距分析 - 更新 2026-05-09
 
-## 目标: 端到端自动化
-
-**输入**: 自然语言需求 (如 "开发贪食蛇游戏")  
-**输出**: 可运行的游戏
+## 目标
+输入需求 → 输出可运行游戏 (端到端自动化)
 
 ---
 
-## 现状 vs 期望
+## 学习到的 Gaps
 
-### 当前状态 (手动了大部分)
-
-```
-用户需求 → 我手动理解 → 手动创建GDD → 手动生成代码 → 我检查
-                            ↑需要自动化                    ↑需要自动化
-```
-
-### 期望状态 (完全自动化)
-
-```
-用户需求 → godot-agent → 可运行游戏
-              ↑
-         AI 自动处理
-```
-
----
-
-## 差距定义
-
-### G1: AI 理解需求
-| 现状 | 期望 |
+### 1. LLM 集成 (已解决)
+| 问题 | 状态 |
 |------|------|
-| 我理解需求，手动输入 | LLM 自动理解需求 |
-| 我拆解功能 | AI 自动拆解 |
-| 无 | 需求 → GDD 自动转换 |
+| 无 MiniMax key | ✅ 已配置 env var 支持 |
+| Mock 不够智能 | ✅ 可切换真实 LLM |
 
-**需要**: Prompt 模板 + LLM 集成
+**学到的**: 需要 API key 配置才能使用真正的 LLM
 
-### G2: GDD 自动生成
-| 现状 | 期望 |
+### 2. func/end 检测 (部分解决)
+| 问题 | 状态 |
 |------|------|
-| 手动创建 GDD 文档 | 自动生成 GDD 结构 |
-| 手动写 acceptance | AI 自动推导 |
-| 部分实现 | 完整 GDD Engine |
+| 检测过严 | ✅ 已改进为宽松模式 |
+| 手动修复 | ⚠️ 仍需改进 |
 
-**需要**: GDD Auto-generator
+**学到的**: GDScript 语法复杂，简单检测不够
 
-### G3: 代码自动生成
-| 现状 | 期望 |
+### 3. 代码生成质量
+| 问题 | 状态 |
 |------|------|
-| 手动调用 godogen | GDD → 代码自动映射 |
-| 手动复制代码 | 自动写入文件 |
-| 基础模板 | 完整场景+脚本生成 |
+| 生成代码不完整 | ✅ 已有完整模板 |
+| 需手动完善 | ⚠️ 需要更多生成器 |
 
-**需要**: Code Generator
+**学到的**: 预定义模板可以提升生成质量
 
-### G4: 验证循环
-| 现状 | 期望 |
+### 4. 测试验证
+| 问题 | 状态 |
 |------|------|
-| 我检查代码 | 自动解析检查 |
-| 手动运行 Godot | 自动 headless 测试 |
-| 手动发现问题 | AI 自动修复 |
-| 无 | TDD 循环 |
+| 无 screenshot | ⚠️ 需要 Godot |
+| 解析检测 | ✅ 已实现 |
 
-**需要**: Auto-test + Self-fix
+**学到的**: 需要 Godot 运行时才能完整验证
 
-### G5: 交付
-| 现状 | 期望 |
+### 5. 自动化工作流
+| 问题 | 状态 |
 |------|------|
-| 生成文件 | 自动导出 |
-| 我 push | Auto push to remote |
-| 无 | 可执行文件 |
+| 手动调用模块 | ✅ 已有 workflow |
+| 无闭环 | ⚠️ 需集成 |
 
-**需要**: Auto-export
+**学到的**: 需要一个主 Agent 协调所有模块
 
 ---
 
-## 实现优先级
+## 当前实现 vs 期望
 
-### P0 - 核心闭环
-1. **需求理解** - 输入需求，输出 GDD
-2. **代码生成** - GDD → 游戏代码
-3. **验证** - 自动测试
+### 已实现 (✅)
+- RequirementLLM (mock)
+- GDDEngine
+- CodeGenerator + Godogen
+- GameValidator
+- CLI
+- MiniMax 集成框架
 
-### P1 - 增强
-4. **多轮迭代** - 理解 → 生成 → 验证 → 修复
-5. **完整性检查** - 所有文件关联
-
-### P2 - 完善
-6. **自动部署** - Push + Release
-7. **文档生成** - Auto README
-
----
-
-## 技术方案
-
-### 核心组件
-
-```python
-class RequirementParser:
-    """解析需求 → GDD"""
-    def parse(self, user_input: str) -> GDD: ...
-
-class CodeGenerator:
-    """GDDP → 代码"""
-    def generate(self, gdd: GDD) -> GameFiles: ...
-    
-class Validator:
-    """验证 + 自动修复"""
-    def validate(self, files: GameFiles) -> Report: ...
-
-class AgentWorkflow:
-    """主工作流"""
-    def run(self, requirement: str) -> GameFiles:
-        gdd = parser.parse(requirement)
-        files = generator.generate(gdd)
-        report = validator.validate(files)
-        if not report.success:
-            files = self.auto_fix(files, report)
-        return files
-```
-
-### Agent System Prompt
-
-```
-你是 godot-agent，一个专业的游戏开发 AI Agent。
-
-输入: 用户需求 (自然语言)
-输出: 可运行的游戏
-
-工作流程:
-1. 理解需求，生成 GDD
-2. 生成代码 (场景 + 脚本)
-3. 验证代码
-4. 如有问题，自动修复
-5. 报告完成
-
-你必须:
-- 遵循 Godot 4.x 规范
-- 生成完整可运行的游戏
-- 自动处理所有中间步骤
-- 只在无法解决时询问用户
-```
+### 待实现 (⚠️)
+- 真实 LLM 自动理解
+- 完整 Agent 闭环
+- screenshot 自动截图
+- 多轮迭代优化
 
 ---
 
-## 待办
+## 改进方向
 
-- [ ] P0: 核心闭环实现
-- [ ] 测试: 贪食蛇完整自动化
+### Top 3 Priority
+1. **Agent 主循环**: 输入 → 输出 自动化
+2. **Screenshots**: 需要 Godot 运行时
+3. **真实 LLM**: 配置 API key
 
-更新: 2026-05-06
+### 代码质量改进
+- 更多预定义游戏模板 (platform, shooter...)
+- 代码优化 (减少手动修复)
+
+### 测试改进
+- 集成测试 (需要 Godot)
+- E2E 测试自动化
+
 ---
 
-## 更新 2026-05-06 (Step 1-3)
+## 技术债务
 
-### ✅ 已完成
-1. **需求理解 (G1)** - RequirementLLM class
-2. **GDD 生成 (G2)** - llm.py 
-3. **代码生成 (G3)** - 已实现
-4. **验证循环 (G4)** - test_fix.py
+| 问题 | 优先级 |
+|------|--------|
+| validate.py 过严 | P1 |
+| mock LLM 太简单 | P2 |
+| 无 screenshot | P2 |
 
-### 新增模块
-```
-godot_agent/workflow/
-├── __init__.py      # 基础工作流
-├── llm.py         # LLM集成
-└── test_fix.py    # 自动测试与修复
-```
+---
 
-### 工作流状态
-- [x] P0: 核心闭环 ✅
-- [x] P1: 多轮迭代 (FixLoop)
-- [ ] P2: 自动部署 (待)
-
+*更新: 2026-05-09*
