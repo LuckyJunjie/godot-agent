@@ -1,34 +1,65 @@
-# nanobot Docs
+# Godot Agent Documentation
 
-For the latest documentation, visit [nanobot.wiki](https://nanobot.wiki/docs/latest/getting-started/nanobot-overview).
+> AI-powered Godot 4.x game development agent, forked from nanobot.
 
-The pages in this directory track the current repository and may move faster than the published website.
+---
 
-## Core Docs
+## Quick Navigation
 
-Start here for setup, everyday usage, and deployment.
+### Getting Started
+| Document | Description |
+|---|---|
+| [`godot-requirements.md`](./godot-requirements.md) | Full requirements specification (F/G/M/L/H/A) |
+| [`godot-architecture.md`](./godot-architecture.md) | Technical architecture, component design, data flow |
+| [`DEVELOPMENT_PLAN.md`](./DEVELOPMENT_PLAN.md) | Phased implementation roadmap |
 
-| Topic | Repo docs | What it covers |
-|---|---|---|
-| Install and quick start | [`quick-start.md`](./quick-start.md) | Installation, onboarding, and first-run setup |
-| Chat apps | [`chat-apps.md`](./chat-apps.md) | Connect nanobot to Telegram, Discord, WeChat, and more |
-| Agent social network | [`agent-social-network.md`](./agent-social-network.md) | Join external agent communities from nanobot |
-| Configuration | [`configuration.md`](./configuration.md) | Providers, tools, channels, MCP, and runtime settings |
-| Multiple instances | [`multiple-instances.md`](./multiple-instances.md) | Run isolated bots with separate configs and workspaces |
-| CLI reference | [`cli-reference.md`](./cli-reference.md) | Core CLI commands and common entrypoints |
-| In-chat commands | [`chat-commands.md`](./chat-commands.md) | Slash commands and periodic task behavior |
-| OpenAI-compatible API | [`openai-api.md`](./openai-api.md) | Local API endpoints, request format, and file uploads |
-| Deployment | [`deployment.md`](./deployment.md) | Docker, Linux service, and macOS LaunchAgent setup |
+### Integration
+| Document | Description |
+|---|---|
+| [`godot-mcp-integration.md`](./godot-mcp-integration.md) | MCP servers: godot-mcp, godotiq, godogen |
 
-## Advanced Docs
+### Development
+| Document | Description |
+|---|---|
+| [`godot-lsp-harness.md`](./godot-lsp-harness.md) | GDScript LSP client & self-harness system |
+| [`godot-scenes-design.md`](./godot-scenes-design.md) | Scene structure, design patterns, edit tool |
+| [`godot-gdscript-design.md`](./godot-gdscript-design.md) | GDScript style guide & design patterns |
 
-Use these when you want deeper customization, integration, or extension details.
+### Assets
+| Document | Description |
+|---|---|
+| [`godot-assets-meta.md`](./godot-assets-meta.md) | Asset metadata schema & prompt engineering |
+| [`godot-assets-cli.md`](./godot-assets-cli.md) | Asset generation CLI reference |
 
-| Topic | Repo docs | What it covers |
-|---|---|---|
-| Memory | [`memory.md`](./memory.md) | How nanobot stores, consolidates, and restores memory |
-| Python SDK | [`python-sdk.md`](./python-sdk.md) | Use nanobot programmatically from Python |
-| Channel plugin guide | [`channel-plugin-guide.md`](./channel-plugin-guide.md) | Build and test custom chat channel plugins |
-| WebSocket channel | [`websocket.md`](./websocket.md) | Real-time WebSocket access and protocol details |
-| Custom tools | [`my-tool.md`](./my-tool.md) | Inspect and tune runtime state with the `my` tool |
+### Archive
+| Document | Description |
+|---|---|
+| [`archive/nano-bot/`](./archive/nano-bot/) | Original nanobot docs (prefixed with `nano-bot-`) |
 
+---
+
+## Project Structure
+
+```
+godot-agent/
+├── godot_agent/          # Core Python package
+│   ├── scene/            # .tscn / .tres parser
+│   ├── lsp/              # GDScript LSP client
+│   ├── gdd/              # GDD engine
+│   ├── harness/          # Self-harness runner
+│   ├── assets/           # Asset pipeline
+│   └── godogen/          # Skill integrator
+├── gdd/                  # Game Design Document
+├── docs/                 # This documentation
+├── tests/                # Test suite
+└── work/                 # Agent work logs
+```
+
+---
+
+## External Resources
+
+- **godot-mcp**: https://github.com/satelliteoflove/godot-mcp
+- **godotiq**: https://github.com/salvo10f/godotiq
+- **godogen**: https://github.com/htdt/godogen
+- **Godot Engine**: https://godotengine.org

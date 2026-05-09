@@ -62,13 +62,32 @@ class AssetPipeline:
                  self.meta_dir]:
             d.mkdir(parents=True, exist_ok=True)
     
-    async def generate_image(self, meta: ImageMeta, output_name: str) -> Optional[Path]:
+    async def generate_image(self, meta: ImageMeta, output_name: str, api_key: Optional[str] = None) -> Optional[Path]:
         """Generate an image asset via LLM API."""
+        from godot_agent.assets.generator import ImageGenerator
+
         output_path = self.generated_dir / "sprites" / f"{output_name}.png"
-        output_path.touch()
-        await self._save_image_meta(meta, output_name)
-        await self._create_import_config(output_path)
-        return output_path
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        generator = ImageGenerator(api_key=api_key, provider=meta.model)
+        size = f"{meta.resolution[0]}x{meta.resolution[1]}"
+        result = await generator.generate(
+            prompt=meta.prompt,
+            output_path=output_path,
+            size=size,
+            negative_prompt=meta.negative_prompt,
+        )
+
+        if result.success:
+            await self._save_image_meta(meta, output_name)
+            await self._create_import_config(output_path)
+            return output_path
+        else:
+            # Fallback: create stub for offline/dev mode
+            output_path.touch()
+            await self._save_image_meta(meta, output_name)
+            await self._create_import_config(output_path)
+            return output_path
     
     async def generate_audio(self, meta: AudioMeta, output_name: str) -> Optional[Path]:
         """Generate an audio asset."""

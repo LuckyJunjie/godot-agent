@@ -1,0 +1,61 @@
+name: generate_component
+description: >
+  Generate a reusable Godot component GDScript class with typed exports,
+  signals, and lifecycle hooks.
+inputSchema:
+  type: object
+  required: [class_name, type]
+  properties:
+    class_name:
+      type: string
+    type:
+      type: string
+      description: "Base Godot type (Node, Node2D, Area2D, etc.)"
+    extends:
+      type: string
+      default: "Node"
+    properties:
+      type: array
+      items:
+        type: object
+        properties:
+          name:
+            type: string
+          type:
+            type: string
+          default:
+            type: string
+          export:
+            type: boolean
+            default: true
+    signals:
+      type: array
+      items:
+        type: object
+        properties:
+          name:
+            type: string
+          args:
+            type: array
+            items:
+              type: string
+template: |
+  class_name {{ class_name }} extends {{ extends | default("Node") }}
+
+  {%- for sig in signals %}
+  signal {{ sig.name }}({% for a in sig.args %}{{ a }}{% if not loop.last %}, {% endif %}{% endfor %})
+  {%- endfor %}
+
+  {%- for prop in properties %}
+  {%- if prop.export %}
+  @export var {{ prop.name }}: {{ prop.type }} = {{ prop.default }}
+  {%- else %}
+  var {{ prop.name }}: {{ prop.type }} = {{ prop.default }}
+  {%- endif %}
+  {%- endfor %}
+
+  func _ready() -> void:
+  	pass
+
+  func _process(delta: float) -> void:
+  	pass

@@ -1,0 +1,57 @@
+name: generate_input_map
+description: >
+  Generate an input map configuration script that wraps Godot's Input class
+  with typed action detection.
+inputSchema:
+  type: object
+  required: [class_name, actions]
+  properties:
+    class_name:
+      type: string
+    actions:
+      type: array
+      items:
+        type: object
+        properties:
+          name:
+            type: string
+          key:
+            type: string
+          alt_key:
+            type: string
+          joy_button:
+            type: integer
+template: |
+  class_name {{ class_name }} extends Node
+
+  ## Auto-generated input map wrapper.
+  ## Add to project autoloads for global access.
+
+  {%- for a in actions %}
+  var {{ a.name }}_pressed: bool = false
+  var {{ a.name }}_just_pressed: bool = false
+  {%- endfor %}
+
+  func _input(event: InputEvent) -> void:
+  	{%- for a in actions %}
+  	{{ a.name }}_pressed = Input.is_action_pressed("{{ a.name }}")
+  	{{ a.name }}_just_pressed = Input.is_action_just_pressed("{{ a.name }}")
+  	{%- endfor %}
+
+  static func register_actions() -> void:
+  	{%- for a in actions %}
+  	var {{ a.name }}_action = InputEventKey.new()
+  	{{ a.name }}_action.keycode = KEY_{{ a.key | upper }}
+  	InputMap.add_action("{{ a.name }}")
+  	InputMap.action_add_event("{{ a.name }}", {{ a.name }}_action)
+  	{%- if a.alt_key %}
+  	var {{ a.name }}_alt = InputEventKey.new()
+  	{{ a.name }}_alt.keycode = KEY_{{ a.alt_key | upper }}
+  	InputMap.action_add_event("{{ a.name }}", {{ a.name }}_alt)
+  	{%- endif %}
+  	{%- if a.joy_button is defined %}
+  	var {{ a.name }}_joy = InputEventJoypadButton.new()
+  	{{ a.name }}_joy.button_index = {{ a.joy_button }}
+  	InputMap.action_add_event("{{ a.name }}", {{ a.name }}_joy)
+  	{%- endif %}
+  	{%- endfor %}
