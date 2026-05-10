@@ -1,0 +1,33 @@
+name: top_down_movement
+description: Generate top-down 2D movement logic with WASD/arrow key support and collision.
+inputSchema:
+  type: object
+  properties:
+    class_name:
+      type: string
+      description: Name of the class
+    speed:
+      type: number
+      default: 200.0
+    friction:
+      type: number
+      default: 0.8
+  required: [class_name]
+template: |
+  extends CharacterBody2D
+  class_name {{ class_name }}
+
+  @export var speed: float = {{ speed }}
+  @export var friction: float = {{ friction }}
+  var input_vector: Vector2 = Vector2.ZERO
+
+  func _physics_process(delta):
+      input_vector = Vector2(
+          Input.get_axis("ui_left", "ui_right"),
+          Input.get_axis("ui_up", "ui_down")
+      ).normalized()
+      if input_vector:
+          velocity = input_vector * speed
+      else:
+          velocity = velocity.lerp(Vector2.ZERO, friction)
+      move_and_slide()

@@ -1,0 +1,40 @@
+name: scoring_system
+description: Generate a scoring system with HUD label update and high-score persistence.
+inputSchema:
+  type: object
+  properties:
+    class_name:
+      type: string
+    score_label_path:
+      type: string
+      description: Node path to the score Label (e.g. "%ScoreLabel")
+  required: [class_name]
+template: |
+  extends Node
+  class_name {{ class_name }}
+
+  signal score_changed(new_score)
+  signal high_score_beaten(new_high)
+
+  var score: int = 0:
+      set(value):
+          score = value
+          score_changed.emit(score)
+          _update_hud()
+
+  var high_score: int = 0
+  @onready var score_label: Label = {{ score_label_path }}
+
+  func add_points(points: int):
+      score += points
+      if score > high_score:
+          high_score = score
+          high_score_beaten.emit(high_score)
+
+  func reset():
+      score = 0
+      _update_hud()
+
+  func _update_hud():
+      if score_label:
+          score_label.text = "Score: %d" % score
