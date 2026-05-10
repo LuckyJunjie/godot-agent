@@ -11,6 +11,7 @@ from godot_agent.bridge.tools import (
     AssetGenerateTool,
     HarnessRunTool,
 )
+from godot_agent.bridge.tools_gdd import GDDCreateTool
 from godot_agent.bridge.tools_compound import (
     CreateComponentTool,
     CreateGameFromGDDTool,
@@ -36,6 +37,7 @@ GODOT_TOOLS = [
     GDDValidateTool,
     AssetGenerateTool,
     HarnessRunTool,
+    GDDCreateTool,
     # Compound tools
     CreateComponentTool,
     CreateGameFromGDDTool,

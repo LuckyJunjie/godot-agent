@@ -253,8 +253,8 @@ class ProjectInspectTool(Tool):
         inspector = ProjectInspector(project_root)
         report = inspector.inspect()
         lines = [
-            f"Project: {report.name}",
-            f"Scenes: {report.total_scenes}, Scripts: {report.total_scripts}",
+            f"Project: {report.project_name or '(unnamed)'}",
+            f"Scenes: {len(report.scenes)}, Scripts: {len(report.scripts)}",
             f"Autoloads: {len(report.autoloads)}",
             f"Warnings: {len(report.warnings)}",
         ]

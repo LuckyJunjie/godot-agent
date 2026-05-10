@@ -127,16 +127,15 @@ class PhaseExecutor:
         """Check if phase output meets acceptance criteria."""
         errors = []
         for criterion in phase.acceptance:
-            # Heuristic: check if criterion keywords appear in output
-            # More robust: check file existence for file-related criteria
-            if criterion.lower().startswith("exists"):
+            lowered = criterion.lower()
+            # File existence check: "<path> exists" or "<path> was created"
+            if lowered.endswith(" exists") or lowered.endswith(" was created"):
                 # Extract path from criterion like "scenes/player.tscn exists"
-                parts = criterion.split()
-                if len(parts) >= 2:
-                    path = parts[0]
-                    if not Path(path).exists():
-                        errors.append(f"Acceptance criterion not met: {criterion}")
-            elif criterion.lower() not in output.lower():
+                parts = criterion.rsplit(" ", 1)
+                path = parts[0]
+                if not Path(path).exists():
+                    errors.append(f"Acceptance criterion not met: {criterion}")
+            elif lowered not in output.lower():
                 errors.append(f"Acceptance criterion not met: {criterion}")
         return errors
 
