@@ -15,6 +15,10 @@ from godot_agent.gdd import GDDEngine
 from godot_agent.harness import HarnessRunner
 from godot_agent.inspector import ProjectInspector
 from godot_agent.scene import SceneDocument
+from godot_agent.planner import GamePlanner
+from godot_agent.planner.executor import PhaseExecutor
+from godot_agent.bridge.registry import register_godot_tools
+from nanobot.agent.tools.registry import ToolRegistry
 
 app = typer.Typer(
     name="godot-agent",
@@ -151,6 +155,55 @@ def gdd_validate(
             console.print(f"  - {issue}")
         if strict:
             raise typer.Exit(1)
+
+
+@app.command()
+def generate(
+    requirement: str = typer.Argument(..., help="Natural language game requirement"),
+    project: str = typer.Option(".", "--project", "-p", help="Godot project path"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show plan without executing"),
+):
+    """Generate a complete Godot game from a natural language requirement."""
+    from godot_agent.workflow.real_llm import get_llm_client
+
+    llm = get_llm_client()
+    planner = GamePlanner(llm)
+    registry = ToolRegistry()
+    register_godot_tools(registry)
+    executor = PhaseExecutor(registry)
+
+    async def run():
+        console.print(f"[bold]Planning game: {requirement}[/bold]")
+        try:
+            plan = await planner.plan(requirement, project_root=project)
+        except Exception as exc:
+            console.print(f"[red]Planning failed: {exc}[/red]")
+            raise typer.Exit(1)
+
+        console.print(f"[green]Genre: {plan.genre}[/green]")
+        console.print(f"[green]Phases: {len(plan.phases)}[/green]")
+
+        for phase in plan.phases:
+            console.print(f"  • {phase.name} ({phase.tool})")
+
+        if dry_run:
+            console.print("[yellow]Dry run — not executing phases[/yellow]")
+            return
+
+        console.print("\n[bold]Executing phases...[/bold]")
+        results = await executor.execute_plan(plan)
+
+        for result in results:
+            status = "[green]✓[/green]" if result.success else "[red]✗[/red]"
+            console.print(f"{status} {result.phase_id}")
+            if result.errors:
+                for err in result.errors:
+                    console.print(f"    [red]{err}[/red]")
+
+        success_count = sum(1 for r in results if r.success)
+        console.print(f"\n[bold]{success_count}/{len(results)} phases completed[/bold]")
+
+    asyncio.run(run())
 
 
 @app.command()
