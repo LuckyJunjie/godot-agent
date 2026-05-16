@@ -80,6 +80,11 @@ created: {date}
         
         return stories
     
+    def _safe_story_filename(self, story_id: str) -> str:
+        """Sanitize story_id for use as a filename."""
+        safe_id = story_id.replace("/", "_").replace("\\", "_").replace("..", "_")
+        return f"story-{safe_id}.md"
+
     def _parse_story(self, path: Path) -> Optional[GDDStory]:
         """Parse a story file."""
         content = path.read_text()
@@ -106,11 +111,12 @@ created: {date}
     def create_story(self, story_id: str, title: str, content: str = "") -> GDDStory:
         """Create a new story."""
         story = GDDStory(id=story_id, title=title, content=content)
-        
-        # Write to file
-        story_file = self.stories_dir / f"story-{story_id}.md"
+
+        # Sanitize story_id for filename
+        safe_id = story_id.replace("/", "_").replace("\\", "_").replace("..", "_")
+        story_file = self.stories_dir / f"story-{safe_id}.md"
         story_file.write_text(self._story_to_markdown(story))
-        
+
         return story
     
     def _story_to_markdown(self, story: GDDStory) -> str:
@@ -130,7 +136,7 @@ created: {date}
     
     def update_story(self, story_id: str, **kwargs):
         """Update story fields."""
-        story_file = self.stories_dir / f"story-{story_id}.md"
+        story_file = self.stories_dir / self._safe_story_filename(story_id)
         
         if story_file.exists():
             story = self._parse_story(story_file)
@@ -141,24 +147,30 @@ created: {date}
                 
                 story_file.write_text(self._story_to_markdown(story))
     
+    def _resolve_path(self, path: str) -> Path:
+        """Convert a Godot res:// path to a filesystem path."""
+        if path.startswith("res://"):
+            path = path[6:]  # Strip res:// prefix
+        return self.project_root / path
+
     def validate_traceability(self) -> dict:
         """Validate that all referenced files exist."""
         stories = self.load_stories()
         issues = []
-        
+
         for story in stories:
             for scene in story.scenes:
-                if not (self.project_root / scene).exists():
+                if not self._resolve_path(scene).exists():
                     issues.append(f"Missing scene: {scene}")
-            
+
             for script in story.scripts:
-                if not (self.project_root / script).exists():
+                if not self._resolve_path(script).exists():
                     issues.append(f"Missing script: {script}")
-            
+
             for test in story.tests:
-                if not (self.project_root / test).exists():
+                if not self._resolve_path(test).exists():
                     issues.append(f"Missing test: {test}")
-        
+
         return {
             "valid": len(issues) == 0,
             "issues": issues

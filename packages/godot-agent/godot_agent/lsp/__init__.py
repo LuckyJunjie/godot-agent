@@ -53,9 +53,10 @@ class GDScriptLSPClient:
         except (ConnectionRefusedError, OSError):
             return False
     
-    async def initialize(self, project_root: str) -> dict:
+    async def initialize(self, project_root: str | None = None) -> dict:
         """Send LSP initialize request."""
-        self.project_root = project_root
+        if project_root:
+            self.project_root = project_root
         
         request = {
             "jsonrpc": "2.0",
@@ -90,9 +91,9 @@ class GDScriptLSPClient:
                 response_line = await self.reader.readline()
                 if response_line:
                     return json.loads(response_line.decode())
-        except (json.JSONDecodeError, OSError, asyncio.CancelledError):
-            pass
-        
+        except (json.JSONDecodeError, OSError, asyncio.CancelledError) as exc:
+            return {"error": str(exc)}
+
         return None
     
     async def goto_definition(self, file: str, line: int, column: int) -> Optional[Location]:
@@ -188,7 +189,9 @@ class GDScriptLSPClient:
         if self.writer:
             self.writer.close()
             await self.writer.wait_closed()
-    
-    def is_available(self) -> bool:
-        """Check if LSP server is available."""
-        return self.writer is not None
+
+    async def is_available(self) -> bool:
+        """Check if LSP server is available, attempting to connect if needed."""
+        if self.writer is not None:
+            return True
+        return await self.connect()

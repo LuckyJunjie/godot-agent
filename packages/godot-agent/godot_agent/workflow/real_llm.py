@@ -17,27 +17,36 @@ class MiniMaxClient:
         
         if not self.api_key and config_path:
             try:
-                config = json.load(open(config_path))
+                with open(config_path) as f:
+                    config = json.load(f)
                 self.api_key = config.get("api_key") or os.environ.get(config.get("api_key_env", ""))
                 self.model = config.get("model", self.model)
-            except:
+            except (OSError, json.JSONDecodeError):
                 pass
     
     def is_available(self) -> bool:
         return bool(self.api_key)
     
-    def chat(self, messages: list, **kwargs) -> str:
+    async def chat(self, messages: list, **kwargs) -> str | None:
         if not self.is_available():
             return None
-        
-        import requests
+
+        import aiohttp
+
         headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
         data = {"model": self.model, "messages": messages, **kwargs}
-        
+
         try:
-            resp = requests.post(f"{self.base_url}/text/chatcompletion_v2", headers=headers, json=data, timeout=30)
-            result = resp.json()
-            return result["choices"][0]["message"]["content"]
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    f"{self.base_url}/text/chatcompletion_v2",
+                    headers=headers,
+                    json=data,
+                    timeout=aiohttp.ClientTimeout(total=30),
+                ) as resp:
+                    resp.raise_for_status()
+                    result = await resp.json()
+                    return result["choices"][0]["message"]["content"]
         except Exception as e:
             print(f"API error: {e}")
             return None

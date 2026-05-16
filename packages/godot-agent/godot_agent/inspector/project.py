@@ -122,6 +122,9 @@ class ProjectInspector:
     def _inspect_scenes(self, report: ProjectReport):
         """Find and inspect all .tscn files."""
         for scene_file in self.project_root.rglob("*.tscn"):
+            # Skip Godot cache and import directories
+            if ".godot" in scene_file.parts or ".import" in scene_file.parts:
+                continue
             rel_path = scene_file.relative_to(self.project_root)
             info = SceneInfo(path=str(rel_path))
 
@@ -151,6 +154,9 @@ class ProjectInspector:
     def _inspect_scripts(self, report: ProjectReport):
         """Find and inspect all .gd files."""
         for script_file in self.project_root.rglob("*.gd"):
+            # Skip Godot cache and import directories
+            if ".godot" in script_file.parts or ".import" in script_file.parts:
+                continue
             rel_path = script_file.relative_to(self.project_root)
             info = ScriptInfo(path=str(rel_path))
 
@@ -167,20 +173,19 @@ class ProjectInspector:
                 if 'extends ' in stripped:
                     parts = stripped.split('extends ')
                     if len(parts) > 1:
-                        info.extends = parts[1].split()[0]
+                        info.extends = parts[1].split()[0].split('(')[0]
 
                 if stripped.startswith('signal '):
                     sig = stripped.replace('signal ', '').split('(')[0]
                     info.signals.append(sig)
 
-                if '@export' in stripped:
-                    # Try to find the next var declaration
+                if stripped.startswith('@export'):
                     info.exports.append(stripped)
 
-                if 'func _ready(' in stripped:
+                if stripped.startswith('func _ready('):
                     info.has_ready = True
 
-                if 'func _process(' in stripped:
+                if stripped.startswith('func _process('):
                     info.has_process = True
 
             report.scripts.append(info)

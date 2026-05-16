@@ -85,7 +85,7 @@ class CreateScriptTool(Tool):
                 f"class_name {name}",
                 "",
                 "func _ready():",
-                '    print("Autoload ready: {name}")',
+                f'    print("Autoload ready: {name}")',
                 "",
                 "func _notification(what):",
                 "    if what == NOTIFICATION_WM_CLOSE_REQUEST:",
@@ -302,27 +302,27 @@ class ExportGameTool(Tool):
         preset: str = "Windows Desktop",
         output_path: str = "",
     ) -> str:
-        import subprocess
+        import asyncio
 
         try:
-            result = subprocess.run(
-                [
-                    "godot",
-                    "--headless",
-                    "--export-release",
-                    preset,
-                    output_path,
-                    "--path",
-                    project_root,
-                ],
-                capture_output=True,
-                text=True,
-                timeout=300,
+            proc = await asyncio.create_subprocess_exec(
+                "godot",
+                "--headless",
+                "--export-release",
+                preset,
+                output_path,
+                "--path",
+                project_root,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
             )
-            if result.returncode == 0:
+            stdout, stderr = await asyncio.wait_for(
+                proc.communicate(), timeout=300
+            )
+            if proc.returncode == 0:
                 return f"✅ Exported to {output_path}"
-            return f"❌ Export failed:\n{result.stderr}"
+            return f"❌ Export failed:\n{stderr.decode()}"
         except FileNotFoundError:
             return "⚠️ Godot not installed"
-        except subprocess.TimeoutExpired:
+        except asyncio.TimeoutError:
             return "⚠️ Export timed out"

@@ -92,6 +92,10 @@ class CreateComponentTool(Tool):
         root = Path(project_root)
         behaviors = behaviors or []
 
+        # UI screens should default to Control
+        if component_type == "ui_screen" and extends == "CharacterBody2D":
+            extends = "Control"
+
         # 1. Generate script via godogen skill
         integrator = GodogenIntegrator(project_root)
         integrator.load_all()
@@ -108,7 +112,8 @@ class CreateComponentTool(Tool):
         scene_path = root / "scenes" / f"{name.lower()}.tscn"
         scene_path.parent.mkdir(parents=True, exist_ok=True)
         self._generate_scene(
-            scene_path, name, extends, script_path, behaviors, scene_parent
+            scene_path, name, extends, script_path, behaviors, scene_parent,
+            component_type=component_type,
         )
 
         # 3. Generate sprite if requested
@@ -217,6 +222,7 @@ class CreateComponentTool(Tool):
         script_path: Path,
         behaviors: list[str],
         parent: str,
+        component_type: str = "",
     ) -> None:
         """Generate a .tscn scene file."""
         doc = SceneDocument()
@@ -248,7 +254,7 @@ class CreateComponentTool(Tool):
                 "",
                 f'[node name="GPUParticles2D" type="GPUParticles2D" parent="."]',
             ])
-        if component_type := "ui_screen":
+        if component_type == "ui_screen":
             lines.extend([
                 "",
                 '[node name="CanvasLayer" type="CanvasLayer" parent="."]',
@@ -297,18 +303,26 @@ class CreateGameFromGDDTool(Tool):
         # Generate each referenced scene
         for scene_path_str in story.scenes:
             scene_name = Path(scene_path_str).stem
-            component_type = (
-                "player"
-                if "player" in scene_name.lower()
-                else "enemy"
-                if "enemy" in scene_name.lower()
-                else "collectible"
-            )
+            lowered = scene_name.lower()
+            if "player" in lowered:
+                component_type = "player"
+                behaviors = ["movement", "collision", "input"]
+            elif "enemy" in lowered or "ai" in lowered:
+                component_type = "enemy"
+                behaviors = ["movement", "collision", "ai"]
+            elif "ui" in lowered or "menu" in lowered or "hud" in lowered:
+                component_type = "ui_screen"
+                behaviors = ["input"]
+            else:
+                component_type = "collectible"
+                behaviors = ["movement", "collision"]
+
             try:
                 result = await component_tool.execute(
                     project_root=project_root,
                     component_type=component_type,
                     name=scene_name.capitalize(),
+                    behaviors=behaviors,
                 )
                 results.append(result)
             except Exception as exc:

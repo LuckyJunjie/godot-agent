@@ -34,30 +34,31 @@ class GodogenIntegrator:
         godogen_dir = self.skills_dir / "godogen"
         if not godogen_dir.exists():
             return []
-        
+
         tools = []
         for skill_file in godogen_dir.glob("*.yaml"):
             tool = self._parse_yaml_skill(skill_file)
-            if tool:
+            if tool and tool.name not in {t.name for t in self.tools}:
                 tools.append(tool)
-        
+
         self.tools.extend(tools)
         return tools
     
     def load_skill_pack(self, path: str) -> list[ToolSpec]:
         """Load a skill pack from path."""
         skill_path = Path(path)
-        
+
         if not skill_path.exists():
             return []
-        
+
         tools = []
-        
+        existing_names = {t.name for t in self.tools}
+
         for skill_file in skill_path.glob("*.yaml"):
             tool = self._parse_yaml_skill(skill_file)
-            if tool:
+            if tool and tool.name not in existing_names:
                 tools.append(tool)
-        
+
         self.tools.extend(tools)
         return tools
     
@@ -153,24 +154,46 @@ class GodogenIntegrator:
     def _extract_parameters(self, content: str) -> list[dict]:
         """Extract function parameters."""
         params = []
-        
+
         import re
-        pattern = r'def\s+\w+\(([^)]*)\)'
-        
-        for match in re.finditer(pattern, content):
+        # Regex that handles one level of nested parentheses in type hints
+        pattern = r'def\s+\w+\((.*?)\)(?:\s*->|\s*:|\n)'
+
+        for match in re.finditer(pattern, content, re.DOTALL):
             args = match.group(1)
             if args:
-                for arg in args.split(','):
-                    arg = arg.strip()
-                    if arg and '=' in arg:
-                        name, default = arg.split('=', 1)
-                        params.append({
-                            "name": name.strip(),
-                            "default": default.strip()
-                        })
-                    elif arg:
-                        params.append({"name": arg, "default": None})
-        
+                # Split by comma, but respect one level of nesting
+                depth = 0
+                current = ""
+                for char in args:
+                    if char in "([":
+                        depth += 1
+                    elif char in "])":
+                        depth -= 1
+                    elif char == "," and depth == 0:
+                        arg = current.strip()
+                        if arg and "=" in arg:
+                            name, default = arg.split("=", 1)
+                            params.append({
+                                "name": name.strip(),
+                                "default": default.strip()
+                            })
+                        elif arg:
+                            params.append({"name": arg, "default": None})
+                        current = ""
+                        continue
+                    current += char
+                # Handle last arg
+                arg = current.strip()
+                if arg and "=" in arg:
+                    name, default = arg.split("=", 1)
+                    params.append({
+                        "name": name.strip(),
+                        "default": default.strip()
+                    })
+                elif arg:
+                    params.append({"name": arg, "default": None})
+
         return params
     
     def register_as_mcp_tools(self) -> list[dict]:
@@ -215,6 +238,9 @@ class GodogenIntegrator:
     
     def generate_state_machine(self, name: str, states: list[str], transitions: dict) -> str:
         """Generate a state machine GDScript."""
+        if not states:
+            return f"extends Node\n\nclass_name {name}\n\n# No states defined\n"
+
         tool = next((t for t in self.tools if t.name == "generate_state_machine"), None)
         if tool:
             return self.render_skill("generate_state_machine", {
@@ -222,7 +248,7 @@ class GodogenIntegrator:
                 "states": [{"name": s} for s in states],
                 "transitions": transitions,
             })
-        
+
         # Fallback inline template
         lines = [
             "extends Node",
@@ -231,25 +257,25 @@ class GodogenIntegrator:
             "",
             "# States",
         ]
-        
+
         for state in states:
             lines.append(f"enum State {{ {state} }}")
-        
+
         lines.extend([
             "",
             "var current_state: State",
             "",
             "func _ready():",
-            "    current_state = State." + states[0],
+            f"    current_state = State.{states[0]}",
             "",
             "func _process(delta):",
             "    match current_state:",
         ])
-        
+
         for state, target in transitions.items():
             lines.append(f"        State.{state}:")
             lines.append(f"            # Handle {state} -> {target}")
-        
+
         return '\n'.join(lines)
     
     def generate_component(self, type: str, properties: dict) -> str:

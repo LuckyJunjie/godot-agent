@@ -141,8 +141,8 @@ class AutoFixer:
         fixes = [
             # Fix tab/space indentation
             (code.replace('\t', '    '), "tab → 4 spaces"),
-            # Fix missing export
-            (code.replace('@export ', '@export var '), "add @export var"),
+            # Fix missing export (only if @export is not already followed by var)
+            (re.sub(r'@export(?=\s|$)(?!\s+var)', '@export var', code) if '@export var' not in code else code, "add @export var"),
             # Fix Vector2 typo
             (code.replace('Vector2 .', 'Vector2.'), "fix Vector2"),
         ]

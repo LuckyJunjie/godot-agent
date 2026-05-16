@@ -128,9 +128,9 @@ class MCPClient:
             
             if response_line:
                 return json.loads(response_line.decode())
-        except (asyncio.TimeoutError, json.JSONDecodeError, KeyError):
-            pass
-        
+        except (asyncio.TimeoutError, json.JSONDecodeError, KeyError) as exc:
+            return {"error": str(exc)}
+
         return None
     
     async def list_tools(self, server_name: str) -> list[MCPTool]:
@@ -168,9 +168,9 @@ class MCPClient:
                     )
                     for t in tools
                 ]
-        except (asyncio.TimeoutError, json.JSONDecodeError):
-            pass
-        
+        except (asyncio.TimeoutError, json.JSONDecodeError) as exc:
+            return []
+
         return []
     
     async def start_all(self) -> dict[str, bool]:

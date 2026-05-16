@@ -5,7 +5,7 @@ Auto Test and Fix Loop - Step 3
 import subprocess
 import re
 from pathlib import Path
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 
@@ -14,7 +14,7 @@ class TestResult:
     """测试结果"""
     passed: bool
     message: str
-    errors: list[str] = None
+    errors: list[str] = field(default_factory=list)
 
 
 class AutoTester:
@@ -33,12 +33,10 @@ class AutoTester:
             errors = []
             
             # Check for common issues
-            if "extends" not in content:
-                errors.append("缺少 extends")
+            if "extends" not in content and "class_name" not in content:
+                errors.append("缺少 extends 或 class_name")
             if "func " not in content and "_ready" not in content:
                 errors.append("缺少函数定义")
-            if content.count("func ") > content.count("end"):
-                errors.append("func/end 不匹配")
             if not content.strip():
                 errors.append("文件为空")
             

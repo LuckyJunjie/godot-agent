@@ -30,6 +30,9 @@ class TestCreateComponentTool:
             behaviors=["input"],
         )
         assert "Created component 'MainMenu'" in result
+        scene_content = (temp_project / "scenes" / "mainmenu.tscn").read_text()
+        assert 'type="Control"' in scene_content
+        assert "CanvasLayer" in scene_content
 
 
 class TestCreateScriptTool:
@@ -49,6 +52,15 @@ class TestCreateScriptTool:
         content = (temp_project / "scripts" / "hero.gd").read_text()
         assert "extends CharacterBody2D" in content
         assert "_physics_process" in content
+
+    async def test_create_autoload_script(self, temp_project):
+        tool = CreateScriptTool()
+        path = str(temp_project / "scripts" / "global.gd")
+        result = await tool.execute(path=path, template="autoload", class_name="Global")
+        content = (temp_project / "scripts" / "global.gd").read_text()
+        assert "extends Node" in content
+        assert "class_name Global" in content
+        assert "Autoload ready: Global" in content
 
 
 class TestSetInputActionTool:

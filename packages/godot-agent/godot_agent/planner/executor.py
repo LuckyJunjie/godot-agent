@@ -80,11 +80,14 @@ class PhaseExecutor:
                 retry_count=0,
             )
 
+        errors = []
         for attempt in range(phase.max_retries):
             try:
                 output = await tool.execute(**phase.parameters)
             except Exception as exc:
                 output = f"Tool execution error: {exc}"
+                errors = [str(exc)]
+                continue  # Retry on exception
 
             # Run acceptance checks
             errors = self._check_acceptance(phase, output)

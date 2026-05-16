@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from nanobot.agent.tools.base import Tool
@@ -38,12 +39,15 @@ class GDScriptLintTool(Tool):
         client = GDScriptLSPClient()
         if await client.is_available():
             try:
-                await client.initialize()
+                project_root = str(Path(path).parent)
+                await client.initialize(project_root)
                 # Note: get_diagnostics is a placeholder in current LSP client;
                 # real implementation would collect server-pushed notifications.
                 return f"⚠️ LSP diagnostics not fully implemented yet for {path}"
             except Exception as exc:
                 return f"LSP error: {exc}"
+            finally:
+                await client.close()
 
         # Fallback: run godot --check-only
         import subprocess
@@ -101,10 +105,13 @@ class GDScriptGotoDefTool(Tool):
         if not await client.is_available():
             return "⚠️ LSP server not available"
         try:
-            await client.initialize()
+            project_root = str(Path(path).parent)
+            await client.initialize(project_root)
             loc = await client.goto_definition(path, line, character)
             if loc:
                 return f"Defined at: {loc.uri}:{loc.range.start.line}"
             return "Definition not found"
         except Exception as exc:
             return f"LSP error: {exc}"
+        finally:
+            await client.close()

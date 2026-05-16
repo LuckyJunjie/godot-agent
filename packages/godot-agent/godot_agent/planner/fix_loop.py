@@ -112,8 +112,8 @@ Do not explain the changes.
                 result = await lint_tool.execute(path=file_path)
                 if "❌" in result or "error" in result.lower():
                     errors.append(result)
-            except Exception:
-                pass
+            except Exception as exc:
+                errors.append(f"Lint error: {exc}")
 
         # Try harness for .gd files
         if file_path.endswith(".gd"):
@@ -123,8 +123,8 @@ Do not explain the changes.
                     result = await harness_tool.execute(test_script=file_path)
                     if "FAILED" in result:
                         errors.append(result)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    errors.append(f"Harness error: {exc}")
 
         return errors
 

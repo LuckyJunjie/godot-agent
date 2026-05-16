@@ -41,9 +41,26 @@ class SceneInspectTool(Tool):
 
     async def execute(self, path: str) -> str:
         doc = SceneDocument()
+        if not Path(path).exists():
+            return f"Error: Scene file not found: {path}"
         doc.load(path)
-        lines = [f"Scene: {path}", f"External resources: {len(doc.ext_resources)}"]
+        lines = [
+            f"Scene: {path}",
+            f"External resources: {len(doc.ext_resources)}",
+            f"Sub resources: {len(doc.sub_resources)}",
+            f"Connections: {len(doc.connections)}",
+        ]
+        if doc.root:
+            lines.append(f"Root: {doc.root.name} ({doc.root.type})")
+            lines.append("Nodes:")
+            self._list_nodes(doc.root, lines, prefix="  ")
         return "\n".join(lines)
+
+    @staticmethod
+    def _list_nodes(node: SceneNode, lines: list[str], prefix: str = "") -> None:
+        lines.append(f"{prefix}- {node.name} ({node.type})")
+        for child in node.children:
+            SceneInspectTool._list_nodes(child, lines, prefix=prefix + "  ")
 
 
 class SceneEditTool(Tool):
@@ -81,6 +98,8 @@ class SceneEditTool(Tool):
     async def execute(self, **kwargs) -> str:
         path = kwargs["path"]
         action = kwargs["action"]
+        if not Path(path).exists():
+            return f"Error: Scene file not found: {path}"
         doc = SceneDocument()
         doc.load(path)
 
@@ -88,7 +107,10 @@ class SceneEditTool(Tool):
             parent = kwargs.get("node_path", ".")
             name = kwargs.get("property", "NewNode")
             node_type = kwargs.get("node_type", "Node")
-            doc.add_node(parent, name, node_type)
+            try:
+                doc.add_node(parent, name, node_type)
+            except ValueError as exc:
+                return f"Error: {exc}"
             doc.save(path)
             return f"Added node {name} ({node_type}) to {parent}"
 
@@ -244,4 +266,5 @@ class HarnessRunTool(Tool):
             result = await runner.run_scene(scene_path)
             status = "LOADED" if result.loaded else "FAILED"
             return f"Scene {status}: {result.scene_path}"
+        return "Error: Specify test_script or scene_path"
         return "Specify test_script or scene_path"

@@ -24,28 +24,22 @@ class GameValidator:
     def validate_syntax(self) -> ValidationResult:
         """Check GDScript syntax"""
         errors = []
-        
+
         for script in (self.project_root / "scripts").glob("*.gd"):
             content = script.read_text()
-            
-            # More accurate GDScript check
-            if not content.startswith("extends"):
-                errors.append(f"{script.name}: missing extends")
-            
-            # Count func _ declarations properly (not _inside_ other funcs)
-            func_lines = [l for l in content.split("\n") if l.strip().startswith("func ")]
-            func_count = len(func_lines)
-            
-            # End statements - class methods need ends, but not inner blocks
-            # GDScript 2.0: simple function count is usually correct for valid scripts
-            if func_count > 0:
-                # Only warn if significantly mismatched (>2 difference)
-                if content.count("end") < func_count - 2:
-                    errors.append(f"{script.name}: possible missing end (has {content.count('end')}, needs ~{func_count})")
-        
+
+            # Check for extends or class_name (either is valid at file start)
+            stripped = content.lstrip()
+            if not (stripped.startswith("extends") or stripped.startswith("class_name")):
+                errors.append(f"{script.name}: missing extends or class_name")
+
+            # Basic check: ensure at least one func definition exists
+            if "func " not in content:
+                errors.append(f"{script.name}: no function definitions")
+
         if errors:
             return ValidationResult(False, f"Syntax errors: {len(errors)}", "")
-        
+
         return ValidationResult(True, "Syntax OK", "")
     
     def validate_scene(self) -> ValidationResult:
@@ -94,7 +88,7 @@ class GameValidator:
                 capture_output=True, timeout=10
             )
             return output_path if Path(output_path).exists() else ""
-        except:
+        except (subprocess.TimeoutExpired, FileNotFoundError):
             return ""
     
     def validate_all(self) -> ValidationResult:

@@ -58,7 +58,7 @@ class SceneNode:
         # Children
         for child in self.children:
             lines.append("")
-            lines.extend(child.to_tscn(depth).split("\n"))
+            lines.extend(child.to_tscn(depth + 1).split("\n"))
         
         return "\n".join(lines)
 
@@ -128,7 +128,10 @@ class SceneDocument:
                     
                     # Build tree
                     if parent == "." or not parent:
-                        self.root = node
+                        if self.root is None:
+                            self.root = node
+                        elif self.root != node:
+                            self.root.add_child(node)
                     else:
                         parent_node = self._node_map.get(parent)
                         if parent_node:
@@ -216,7 +219,7 @@ class SceneDocument:
             conn_line += "]"
             lines.append(conn_line)
         
-        Path(path).write_text('\n'.join(lines))
+        Path(path).write_text('\n'.join(lines) + '\n')
     
     def _generate_uid(self) -> str:
         """Generate a fake Godot UID."""
@@ -328,4 +331,4 @@ class ResourceDocument:
         for key, value in self.properties.items():
             lines.append(f'{key} = {value}')
         
-        Path(path).write_text('\n'.join(lines))
+        Path(path).write_text('\n'.join(lines) + '\n')

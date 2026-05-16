@@ -40,6 +40,6 @@ class TestGDScriptLSPClient:
         client = GDScriptLSPClient()
         assert client.capabilities == {}
     
-    def test_is_available_false(self):
+    async def test_is_available_false(self):
         client = GDScriptLSPClient()
-        assert client.is_available() is False
+        assert await client.is_available() is False
